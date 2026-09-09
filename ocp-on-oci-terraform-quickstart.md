@@ -4,27 +4,64 @@ This directory contains a `terraform.tfvars.template` for deploying OpenShift Co
 
 ## Quick Start
 
-```bash
-# 1. Copy the template
-cp terraform.tfvars.template terraform.tfvars
+The deployment uses a **two-pass terraform workflow**:
 
-# 2. Edit and fill in your values (at minimum the REQUIRED ones)
+- **Pass 1** (`create_openshift_instances=false`) — creates infrastructure, networking, load balancers, Object Storage bucket, and PAR for the rootfs. Produces terraform outputs consumed by the helper scripts.
+- **Pass 2** (`create_openshift_instances=true`) — uploads rootfs to Object Storage, imports the agent ISO as a custom compute image, and launches all cluster instances.
+
+Between the two passes, you extract manifests and create the agent ISO.
+
+```bash
+# 1. Copy the template and fill in your values
+cp terraform.tfvars.template terraform.tfvars
 $EDITOR terraform.tfvars
 
-# 3. Run Terraform
+# 2. Terraform pass 1 — infrastructure only
+cd <terraform-stack>/terraform-stacks/create-cluster
 terraform init
-terraform plan
-terraform apply
+terraform apply -var-file=../../terraform.tfvars -var='create_openshift_instances=false'
+
+# 3. Extract manifests from terraform outputs (CRITICAL — do not skip)
+../../generate-ocp-artifacts.sh
+
+# 4. Create the agent ISO (bakes OCI CCM/CSI/network manifests into the image)
+cd ~/ocp-deployment-agentBasedInstallation
+openshift-install agent create image --dir=.
+
+# 5. Upload rootfs to the boot-artifacts bucket
+oci os object put --bucket-name ocp-deployment-boot-artifacts \
+  --file boot-artifacts/agent.x86_64-rootfs.img \
+  --name agent.x86_64-rootfs.img --force
+
+# 6. Upload ISO and create PAR
+OCI_OS_NAMESPACE=<your-namespace> ../../upload-agent-iso.sh
+
+# 7. Terraform pass 2 — create instances
+cd <terraform-stack>/terraform-stacks/create-cluster
+terraform apply -var-file=../../terraform.tfvars \
+  -var='create_openshift_instances=true' \
+  -var='openshift_image_source_uri=<ISO PAR URL from step 6>' \
+  -var='rootfs_file_path=~/ocp-deployment-agentBasedInstallation/boot-artifacts/agent.x86_64-rootfs.img'
+
+# 8. If using a bastion with VCN peering, re-add the peering route
+../../add-bastion-peering-route.sh
+
+# 9. Monitor installation (~30-45 min)
+export KUBECONFIG=~/ocp-deployment-agentBasedInstallation/auth/kubeconfig
+oc get clusterversion
+oc get nodes
+oc get co
 ```
+
+> **Warning:** Step 3 (`generate-ocp-artifacts.sh`) must run before `openshift-install agent create image`. If the OCI manifests (CCM, CSI, network config) are not in the `openshift/` directory when the ISO is created, the cluster will fail to bootstrap — the cloud controller manager won't deploy, nodes will be stuck with `node.cloudprovider.kubernetes.io/uninitialized` taints, and no pods can schedule.
 
 ## Prerequisites
 
 Before running the stack you must:
 
 1. **Create resource attribution tags** — Run the `create-resource-attribution-tags` stack first. These tags are mandatory for OpenShift on OCI.
-2. **Generate the agent ISO** — Run `openshift-install agent create image` to produce the agent ISO, then upload it to an OCI Object Storage bucket.
-3. **Create a Pre-Authenticated Request (PAR)** — Generate a PAR URL for the uploaded agent ISO to use as `openshift_image_source_uri`.
-4. **Create a compartment** — Decide on (or create) the OCI compartment where cluster resources will live.
+2. **Create a compartment** — Decide on (or create) the OCI compartment where cluster resources will live.
+3. **Prepare a bastion** (disconnected environments) — A RHEL instance with `openshift-install`, `oc`, `terraform`, and OCI CLI installed.
 
 ## Variable Reference
 

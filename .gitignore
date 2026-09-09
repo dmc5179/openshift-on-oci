@@ -1,0 +1,23 @@
+*.mine
+logs/
+
+# Terraform state and providers
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# tfvars files contain credentials (pull secrets, OCIDs, SSH keys)
+# Use *.tfvars.template for committed templates
+*.tfvars
+*.tfvars.*
+!*.tfvars.template
+
+# Serial console dumps
+serial.txt
+
+# Upstream / vendor repos (tracked in their own git repos)
+oci-openshift/
+oci-openshift-mine/
+oci-cloud-controller-manager/
+dto/

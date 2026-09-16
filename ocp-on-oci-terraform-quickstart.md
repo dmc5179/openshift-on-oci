@@ -6,8 +6,8 @@ This directory contains a `terraform.tfvars.template` for deploying OpenShift Co
 
 The deployment uses a **two-pass terraform workflow**:
 
-- **Pass 1** (`create_openshift_instances=false`) — creates infrastructure, networking, load balancers, Object Storage bucket, and PAR for the rootfs. Produces terraform outputs consumed by the helper scripts.
-- **Pass 2** (`create_openshift_instances=true`) — uploads rootfs to Object Storage, imports the agent ISO as a custom compute image, and launches all cluster instances.
+- **Pass 1** (`create_openshift_instances=false`) — creates infrastructure, networking, load balancers, Object Storage bucket, and PARs for the rootfs and ISO. Produces terraform outputs consumed by the helper scripts.
+- **Pass 2** (`create_openshift_instances=true`) — uploads rootfs and ISO to Object Storage, imports the ISO as a custom compute image, and launches all cluster instances.
 
 Between the two passes, you extract manifests and create the agent ISO.
 
@@ -22,31 +22,23 @@ terraform init
 terraform apply -var-file=../../terraform.tfvars -var='create_openshift_instances=false'
 
 # 3. Extract manifests from terraform outputs (CRITICAL — do not skip)
-../../generate-ocp-artifacts.sh
+../../scripts/generate-ocp-artifacts.sh
 
 # 4. Create the agent ISO (bakes OCI CCM/CSI/network manifests into the image)
 cd ~/ocp-deployment-agentBasedInstallation
 openshift-install agent create image --dir=.
 
-# 5. Upload rootfs to the boot-artifacts bucket
-oci os object put --bucket-name ocp-deployment-boot-artifacts \
-  --file boot-artifacts/agent.x86_64-rootfs.img \
-  --name agent.x86_64-rootfs.img --force
-
-# 6. Upload ISO and create PAR
-OCI_OS_NAMESPACE=<your-namespace> ../../upload-agent-iso.sh
-
-# 7. Terraform pass 2 — create instances
+# 5. Terraform pass 2 — uploads ISO + rootfs and creates instances
 cd <terraform-stack>/terraform-stacks/create-cluster
 terraform apply -var-file=../../terraform.tfvars \
   -var='create_openshift_instances=true' \
-  -var='openshift_image_source_uri=<ISO PAR URL from step 6>' \
+  -var='iso_file_path=~/ocp-deployment-agentBasedInstallation/agent.x86_64.iso' \
   -var='rootfs_file_path=~/ocp-deployment-agentBasedInstallation/boot-artifacts/agent.x86_64-rootfs.img'
 
-# 8. If using a bastion with VCN peering, re-add the peering route
-../../add-bastion-peering-route.sh
+# 6. If using a bastion with VCN peering, re-add the peering route
+../../scripts/add-bastion-peering-route.sh
 
-# 9. Monitor installation (~30-45 min)
+# 7. Monitor installation (~30-45 min)
 export KUBECONFIG=~/ocp-deployment-agentBasedInstallation/auth/kubeconfig
 oc get clusterversion
 oc get nodes
@@ -76,7 +68,7 @@ These **must** be provided — the stack has no usable defaults for them.
 | `region` | OCI region identifier (e.g. `us-sanjose-1`, `eu-frankfurt-1`). |
 | `cluster_name` | DNS-compatible cluster name. Lowercase alphanumeric and hyphens, 1–54 characters. Becomes part of the cluster FQDN. |
 | `zone_dns` | Base DNS domain for the cluster (e.g. `example.com`). Must match the base domain in your `install-config.yaml`. |
-| `openshift_image_source_uri` | PAR URL pointing to the agent ISO image in OCI Object Storage. |
+| `openshift_image_source_uri` | PAR URL pointing to the agent ISO image in OCI Object Storage. Not needed for disconnected installs — set `iso_file_path` instead and terraform creates the PAR automatically. |
 | `tag_namespace_compartment_ocid_resource_tagging` | OCID of the compartment containing the OpenShift resource attribution tag namespace. |
 | `rendezvous_ip` | IP assigned to the bootstrap node that orchestrates the Agent-based installation. Must be within the `private_cidr_ocp` subnet and must match the `rendezvousIP` in your `agent-config.yaml`. Default: `10.0.16.20`. |
 
@@ -154,6 +146,9 @@ These variables apply when `is_disconnected_installation = true` (available only
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `is_disconnected_installation` | `false` | Enable disconnected installation mode. |
+| `iso_file_path` | `""` | Local path to `agent.x86_64.iso`. Terraform uploads it to Object Storage and creates a PAR automatically. Leave empty during pass 1. |
+| `rootfs_file_path` | `""` | Local path to `boot-artifacts/agent.x86_64-rootfs.img`. Terraform uploads it to Object Storage. Leave empty during pass 1. |
+| `rootfs_par_expiry_hours` | `168` | Hours until the boot artifact PARs expire (default: 7 days). |
 | `public_ssh_key` | `""` | SSH public key for instance access. |
 | `redhat_pull_secret` | `""` | Red Hat pull secret JSON from console.redhat.com. |
 | `object_storage_namespace` | `""` | OCI Object Storage namespace for the tenancy. |

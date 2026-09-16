@@ -400,9 +400,9 @@ These scripts automate the two-pass terraform workflow. Copy them to the bastion
 | Script | Purpose | When to Run |
 |--------|---------|-------------|
 | `generate-ocp-artifacts.sh` | Extracts `agent-config.yaml`, `install-config.yaml`, and all OCI day-0 manifests (CCM, CSI, MachineConfigs, network) from terraform outputs into the agent-based installer directory | After terraform pass 1, before `openshift-install agent create image` |
-| `upload-agent-iso.sh` | Uploads the agent ISO to OCI Object Storage and creates a PAR URL for terraform pass 2 | After `openshift-install agent create image` |
 | `add-bastion-peering-route.sh` | Adds the bastion VCN peering route to the cluster's private route table (terraform recreates the route table each apply) | After terraform pass 2 |
 | `oci-list-vms.sh` | Lists all running OCI instances in a compartment with name, private IP, and OCID | Anytime, for verification |
+| `oci-bastion-preflight.sh` | Verifies bastion has required tools and FIPS/SELinux settings | Before starting the deployment |
 
 > **Critical:** `generate-ocp-artifacts.sh` must run between terraform pass 1 and ISO creation. Without it, the OCI CCM/CSI manifests are not baked into the ISO, and the cluster will fail to bootstrap — the cloud controller manager won't deploy, nodes will be stuck with an `uninitialized` taint, and no pods can schedule.
 

@@ -29,10 +29,6 @@ mirror:
     # OCI OpenShift Autoscaler (optional — include if using autoscaler)
     - name: ghcr.io/oracle-samples/openshift-oracle-capi-autoscaling:latest
 
-    # Autoscaling dev preview (if needed)
-    - name: ghcr.io/yutpeng/openshift-oracle-capi-autoscaling-dev-preview:v1.62
-    - name: ghcr.io/yutpeng/openshift-oracle-capi-autoscaling-dev-preview:v1.19
-
     # Oracle Cloud Agent (optional — not available in Gov Cloud)
     # Pull URL is tenancy-specific from OCIR, e.g.:
     # - name: <region>.ocir.io/<namespace>/<repo>:<version>

@@ -129,8 +129,8 @@ Per the OCI firewall requirements doc and the `oracle-quickstart/oci-openshift` 
 ### Additional Images (from manifests/ directory)
 | Image | Purpose |
 |-------|---------|
-| `quay.io/openshift/origin-cli:4.20` | Used by autoscaling operator manifests |
-| `ghcr.io/yutpeng/openshift-oracle-capi-autoscaling-dev-preview:v1.19` | Autoscaling dev preview (if needed) |
+| `quay.io/openshift/origin-cli:4.22` | Used by autoscaling operator manifests |
+| `ghcr.io/oracle-samples/openshift-oracle-capi-autoscaling:latest` | OCI OpenShift Autoscaler (if using autoscaler) |
 
 **After mirroring**, update the image references in the custom manifests to point to your enclave mirror registry.
 

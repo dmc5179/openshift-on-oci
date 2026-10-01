@@ -168,6 +168,12 @@ These variables apply when `is_disconnected_installation = true` (available only
 | `https_proxy` | `""` | HTTPS proxy URL. |
 | `no_proxy` | `""` | Comma-separated list of domains/CIDRs to bypass the proxy. |
 
+### Cluster Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `additional_ntp_sources` | `["169.254.169.254"]` | NTP sources added to all cluster nodes via agent-config.yaml. Default uses the OCI instance metadata endpoint. |
+
 ### Autoscaling
 
 | Variable | Default | Description |

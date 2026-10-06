@@ -344,7 +344,7 @@ mirror:
     - name: registry.k8s.io/sig-storage/snapshot-controller:v6.3.0
 
     # --- Supporting images from OCI manifests ---
-    - name: quay.io/openshift/origin-cli:4.20
+    - name: quay.io/openshift/origin-cli:4.22
 ```
 
 ### Usage

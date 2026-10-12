@@ -21,3 +21,6 @@ oci-openshift/
 oci-openshift-mine/
 oci-cloud-controller-manager/
 dto/
+
+# Local ISO copies for analysis (large binaries)
+oc3-isos/

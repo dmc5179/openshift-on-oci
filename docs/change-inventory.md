@@ -48,7 +48,7 @@ Most changes exist under two SHAs because `oc3-support` was rebased from
 | 19 | Use IMDS `realmDomainComponent` as primary realm source | `0c3ae6f` | `59628ff` | `realm` | not submitted |
 | 20 | Remove hardcoded realm domain map | `4eb103b` | `9366189` | `realm` | not submitted |
 | 21 | CCM image source + `imageTagSources` | `4f54f3e` | `d1fedb5` | `airgap` | superseded by #24 |
-| 22 | CCM image in static v1.34.0 manifest → official Oracle source | `9cb8b0c` | `8f1486d` | `realm` | **DISPUTED** — see below |
+| 22 | CCM image in static v1.34.0 manifest → official Oracle source | `9cb8b0c` | `8f1486d` | *reverted* | **REVERTED** by `6b71526` — see below |
 | 23 | `additionalNTPSources` via agent-config (IMDS as NTP) | `a469082` | `7244c31` | `upstream-fix` | not submitted |
 | 24 | Generate `ImageTagMirrorSet` manifest | `40f0fb0` | `0f10990` | `airgap` | not submitted |
 | 25 | Align origin-cli to 4.22 | `c976eb2` | `2b7907b` | `upstream-fix` | not submitted |
@@ -63,20 +63,22 @@ Most changes exist under two SHAs because `oc3-support` was rebased from
 
 ## Notes on specific entries
 
-**#22 is disputed.** yutpeng's review states the official
-`ghcr.io/oracle/cloud-provider-oci:v1.34.0` lacks a fix and that
-`ghcr.io/nikhisin3001/cloud-provider-oci:v1.34.0` must be retained until a new
-release. This needs an Oracle/Red Hat engineering decision and will affect
-whatever is submitted next. See `oracle-issues/pr88-review-archive.md`.
+**#22 was reverted on 2026-10-14.** Oracle engineering confirmed the official
+`ghcr.io/oracle/cloud-provider-oci:v1.34.0` is missing a required fix, and that
+`ghcr.io/nikhisin3001/cloud-provider-oci:v1.34.0` must be used until a corrected
+release ships. Commit `6b71526` restores the developer image across the
+terraform image map, the static reference manifests and both example imagesets.
+Not upstreamable in either direction until Oracle publishes the fix under an
+Oracle-owned namespace — tracked as an open item for Oracle engineering.
 
 **#21 is superseded.** `imageTagSources` is not a valid InstallConfig field.
 The CCM image source part of that commit still stands; the mirror mechanism was
 replaced by #24.
 
-**#2, #11, #23 were motivated by a specific realm but are not realm-specific.**
-FIPS and OCI Vault came out of Gov Cloud work, and the NTP change came out of
-OC6 having no reachable time source — but all three are useful on commercial
-OCI and are classified as upstreamable on their own merits.
+**#2, #11, #23 apply to every OCI region.** FIPS, OCI Vault integration and the
+NTP change each surfaced during Gov Cloud or OC6 work, but all three are useful
+on commercial OCI, OC3 and OC6 alike. Confirmed 2026-10-14; classified
+`upstream-fix` and upstreamable on their own merits.
 
 **#32 is classified `local` but was in PR #88.** The helper scripts are our
 tooling; whether Oracle wants them upstream is their call, not an assumption we
@@ -97,7 +99,7 @@ Work identified but not implemented, so no commits exist yet:
 ## Suggested submission order
 
 1. **`upstream-fix`** — #26, #27, #25, #6, #5. Small, uncontroversial, realm-agnostic, independently useful. Best first PR to rebuild review momentum.
-2. **`realm`** — #12, #19, #20. Coherent story: support non-commercial realms. #22 blocks on the image decision.
+2. **`realm`** — #12, #19, #20. Coherent story: support non-commercial realms. (#22 is no longer part of this group; it was reverted.)
 3. **`airgap`** — #4, #9, #13, #14, #17, #21, #24, #29, #30, #1. The largest group; may need splitting again.
 4. **`oc3` / `oc6`** — #8, #16, plus the CA injection work once done.
 

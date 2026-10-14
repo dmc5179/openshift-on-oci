@@ -114,7 +114,7 @@ Per the OCI firewall requirements doc and the `oracle-quickstart/oci-openshift` 
 ### CCM Image
 | Image | Source |
 |-------|--------|
-| `ghcr.io/oracle/cloud-provider-oci:v1.34.0` | GitHub Container Registry (Oracle) |
+| `ghcr.io/nikhisin3001/cloud-provider-oci:v1.34.0` | GitHub Container Registry — **personal namespace, not Oracle-owned**. Required per Oracle engineering until the fix reaches an official `ghcr.io/oracle` release. |
 
 ### CSI Sidecar Images (from `registry.k8s.io`)
 | Image | Purpose |
@@ -333,7 +333,7 @@ mirror:
     # --- Red Hat Offline Knowledge Portal ---
     - name: registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
     # --- Oracle Cloud Controller Manager ---
-    - name: ghcr.io/oracle/cloud-provider-oci:v1.34.0
+    - name: ghcr.io/nikhisin3001/cloud-provider-oci:v1.34.0
 
     # --- OCI CSI Driver Sidecars ---
     - name: registry.k8s.io/sig-storage/csi-attacher:v4.6.1

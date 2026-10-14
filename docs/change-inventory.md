@@ -59,6 +59,7 @@ Most changes exist under two SHAs because `oc3-support` was rebased from
 | 30 | Boot artifact URLs instead of local paths (Resource Manager) | `d0491db` | `4427d80` | `airgap` | not submitted |
 | 31 | `upload-rootfs.sh` debugging helper | `b31c551` | — | `local` | n/a |
 | 32 | Fail loudly on incomplete manifest extraction | `c947d16` | `40c6221` | `local` | n/a |
+| 33 | Mount additional_trust_bundle into the CCM and CSI pods | `99c5feb` | — | `upstream-fix` | not submitted |
 | — | Remove bastion doc from PR scope | — | `66129d6` | *drop* | PR housekeeping, obsolete |
 
 ## Notes on specific entries
@@ -80,6 +81,20 @@ NTP change each surfaced during Gov Cloud or OC6 work, but all three are useful
 on commercial OCI, OC3 and OC6 alike. Confirmed 2026-10-14; classified
 `upstream-fix` and upstreamable on their own merits.
 
+**#33 is not OC6-specific, despite surfacing there.** It applies to any
+OpenShift on OCI deployment where something the Oracle containers talk to is
+fronted by a non-commercial CA — isolated realms, Gov Cloud, and on-premise
+Compute Cloud@Customer or Private Cloud Appliance, where customer-supplied
+certificates are the norm rather than the exception. The failure is not
+realm-specific either: `additionalTrustBundlePolicy: Always` puts the CA on the
+node, which is why image pulls from a private registry succeed, but CRI-O does
+not mount the host trust store into pods and Oracle's manifests mount no CA
+bundle, so the CCM fails x509, nodes keep the uninitialized taint, CNI never
+starts and the cluster cannot converge. Classified `upstream-fix` rather than
+`realm` on that basis — it is a gap in Oracle's manifests that anyone with a
+private CA will hit. Gated on `additional_trust_bundle`, so connected installs
+are unaffected.
+
 **#32 is classified `local` but was in PR #88.** The helper scripts are our
 tooling; whether Oracle wants them upstream is their call, not an assumption we
 should bake in.
@@ -88,9 +103,6 @@ should bake in.
 
 Work identified but not implemented, so no commits exist yet:
 
-- **CA injection for CCM and CSI pods** (`oc6`) — the OC6 non-commercial CA does
-  not reach the Oracle-image containers, which fail with x509 against the OCI
-  API. Tracked in the `ca-injection-ccm-csi` work state.
 - **Autoscaler disconnected support** (`airgap`) — four runtime dependencies on
   public endpoints. Oracle has proposed a design; see
   `oracle-issues/oracle-issue-autoscaler-disconnected-oracle-response.txt` and
@@ -99,8 +111,9 @@ Work identified but not implemented, so no commits exist yet:
 ## Suggested submission order
 
 1. **`upstream-fix`** — #26, #27, #25, #6, #5. Small, uncontroversial, realm-agnostic, independently useful. Best first PR to rebuild review momentum.
+   #33 belongs here too but is larger and worth its own PR, since it touches two manifest templates plus a new rendered ConfigMap.
 2. **`realm`** — #12, #19, #20. Coherent story: support non-commercial realms. (#22 is no longer part of this group; it was reverted.)
 3. **`airgap`** — #4, #9, #13, #14, #17, #21, #24, #29, #30, #1. The largest group; may need splitting again.
-4. **`oc3` / `oc6`** — #8, #16, plus the CA injection work once done.
+4. **`oc3` / `oc6`** — #8, #16.
 
 `local` entries stay in the fork.

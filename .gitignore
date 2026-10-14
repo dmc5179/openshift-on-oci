@@ -24,3 +24,6 @@ dto/
 
 # Local ISO copies for analysis (large binaries)
 oc3-isos/
+
+# Oracle correspondence kept locally, deliberately untracked
+docs/oracle-issues/*-oracle-response.txt

@@ -5,7 +5,12 @@ which proposes `provider_artifacts_base_url`, `cluster_autoscaler_repository_url
 `provider_installer_image` as module inputs, with the three provider manifests and the Helm
 chart/index pre-staged on an internal webserver.
 
-Status: **drafted, not yet sent.**
+Status: **delivered via the Google Doc, not sent separately** (2026-10-14).
+
+These questions were folded into the "Open Items for Oracle" tab of the shared Google Doc
+(`1TA-9XXR2EJwQyBWlY6y2WK88JkEW7wZJZLmOw5erui0`), under the autoscaler item, so that all open
+Oracle items live in one place. Do not send them again by another channel. This file remains
+the working source for the wording; the Google Doc is what Oracle actually reads.
 
 ---
 

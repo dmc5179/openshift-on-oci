@@ -29,6 +29,27 @@ mirror:
     # OCI OpenShift Autoscaler (optional — include if using autoscaler)
     - name: ghcr.io/oracle-samples/openshift-oracle-capi-autoscaling:latest
 
+    # Components the autoscaler's provider-installer Job pulls in. Versions
+    # must track cert_manager_version, capi_version and capoci_version in
+    # shared_modules/manifest. All tag-referenced, so they also need
+    # ImageTagMirrorSet entries, not just mirroring.
+    - name: quay.io/jetstack/cert-manager-controller:v1.16.3
+    - name: quay.io/jetstack/cert-manager-cainjector:v1.16.3
+    - name: quay.io/jetstack/cert-manager-webhook:v1.16.3
+    - name: registry.k8s.io/cluster-api/cluster-api-controller:v1.14.0
+    - name: ghcr.io/oracle/cluster-api-oci-controller:v0.24.0
+
+    # Rendered by the cluster-autoscaler Helm chart (9.40.0, appVersion
+    # 1.31.0) that the operator installs from its repositoryURL. This is the
+    # chart's default image; confirm with Oracle whether the operator
+    # overrides it before relying on this tag.
+    - name: registry.k8s.io/autoscaling/cluster-autoscaler:v1.31.0
+
+    # Used by 'oc debug node/...'. Not referenced by any manifest, but
+    # without it node debugging is impossible inside the enclave — which is
+    # exactly when it is most needed.
+    - name: registry.redhat.io/rhel9/support-tools:latest
+
     # Oracle Cloud Agent (optional — not available in Gov Cloud)
     # Pull URL is tenancy-specific from OCIR, e.g.:
     # - name: <region>.ocir.io/<namespace>/<repo>:<version>

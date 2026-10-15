@@ -27,3 +27,6 @@ oc3-isos/
 
 # Oracle correspondence kept locally, deliberately untracked
 docs/oracle-issues/*-oracle-response.txt
+
+# Temporary workaround script for Oracle presales; not part of the repo
+patch-ccm-trust-bundle.sh

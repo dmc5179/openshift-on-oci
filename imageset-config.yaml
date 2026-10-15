@@ -45,10 +45,22 @@ mirror:
     # overrides it before relying on this tag.
     - name: registry.k8s.io/autoscaling/cluster-autoscaler:v1.31.0
 
-    # Used by 'oc debug node/...'. Not referenced by any manifest, but
-    # without it node debugging is impossible inside the enclave — which is
-    # exactly when it is most needed.
+    # Troubleshooting images. None are referenced by any manifest, so nothing
+    # pulls them during install — but without them the tools you reach for
+    # when an enclave install goes wrong do not work.
+    #
+    # support-tools backs 'oc debug node/...'.
     - name: registry.redhat.io/rhel9/support-tools:latest
+    # must-gather: 'oc adm must-gather' with no arguments resolves the image
+    # from the release payload, which the platform channel above already
+    # mirrors. This standalone tag is for explicit --image use and for
+    # running must-gather against a cluster that is not healthy enough to
+    # resolve its own payload.
+    - name: registry.redhat.io/openshift4/ose-must-gather:latest
+    # Base images, useful for ad-hoc debug pods and for building anything
+    # inside the enclave.
+    - name: registry.access.redhat.com/ubi9/ubi:latest
+    - name: registry.access.redhat.com/ubi8/ubi:latest
 
     # Oracle Cloud Agent (optional — not available in Gov Cloud)
     # Pull URL is tenancy-specific from OCIR, e.g.:

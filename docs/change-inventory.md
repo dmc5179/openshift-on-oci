@@ -130,7 +130,8 @@ mirror configuration was never emitted. PR 1 is the fix for that.
 | 9 | Autoscaler air-gap — configurable artifact sources, Object Storage hosting | Four runtime fetches from github.com | `ac6c574`, `dfb4b0e`, `b003540` | PR 2; blocked on Oracle | Large |
 | 10 | Disable OCA in Gov Cloud | No marketplace in OC3/OC6 | 8 | **blocked on Oracle** | Trivial | Waiting on Oracle to confirm whether a marketplace exists in OC3/OC6 at all, or whether the commercial OCA image can be pulled into those realms. The fix depends on the answer. |
 | 11 | FIPS support | Not air-gap, but commonly required alongside | 2 | — | Small | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) branched from main |
-| 12 | OCI Vault secrets operator | Independent feature | 11 | — | Small |
+| 12a | Example ImageSetConfiguration for mirroring | Users have no list of what to mirror | part of 11 | — | Small | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99) branched from main |
+| 12b | OCI Vault secrets operator | Independent feature, **no air-gap justification** | 11 | **parked** | Small | Incomplete as written — see below |
 
 ### Order of submission
 
@@ -152,8 +153,30 @@ outstanding questions.
 | 3 | [#97](https://github.com/oracle-quickstart/oci-openshift/pull/97) | +78/−0 | CA mount — stacked on #94 and #96 |
 | 11 | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) | +26/−2 | FIPS + proxy rendering fix — branched from main |
 
-Remaining: **7** (waiting on #95 to land), **12** (ready), **9** and **10**
-(blocked on Oracle).
+| 12a | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99) | +111/−0 | Example ImageSetConfiguration |
+
+Remaining: **7** (waiting on #95 to land), **9** and **10** (blocked on
+Oracle), **12b** (parked).
+
+### Why 12b (OCI Vault) is parked
+
+Entry 11 was a single 6-line `operators:` stanza added to
+`docs/imageset-config.yaml`. Splitting it revealed the stanza is not a usable
+change on its own:
+
+- Red Hat's `secrets-store-csi-driver-operator` ships the CSI driver, not
+  third-party providers. OCI Vault needs Oracle's separate provider DaemonSet,
+  `ghcr.io/oracle/oci-secrets-store-csi-driver-provider:v0.5.1`, which the
+  stanza does not mirror. Mirroring only the operator yields a driver with no
+  provider. KCS 7146818 documents users hitting exactly this with Azure.
+- The provider's Helm chart is served from `oracle.github.io` — a runtime
+  internet fetch, the same class of problem as the autoscaler in PR 9.
+- The chart defaults to `secrets-store-csi-driver.install: true`, which would
+  install the upstream sigs driver alongside the Red Hat operator.
+
+It is also the only item in this plan with no air-gap justification. Pick it
+back up as a complete change (operator + provider + chart handling) or drop
+it.
 
 ### Found while testing, fixed in #98
 

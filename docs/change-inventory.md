@@ -108,12 +108,46 @@ Work identified but not implemented, so no commits exist yet:
   `oracle-issues/oracle-issue-autoscaler-disconnected-oracle-response.txt` and
   the drafted clarifying questions alongside it.
 
-## Suggested submission order
+## Submission plan
 
-1. **`upstream-fix`** — #26, #27, #25, #6, #5. Small, uncontroversial, realm-agnostic, independently useful. Best first PR to rebuild review momentum.
-   #33 belongs here too but is larger and worth its own PR, since it touches two manifest templates plus a new rendered ConfigMap.
-2. **`realm`** — #12, #19, #20. Coherent story: support non-commercial realms. (#22 is no longer part of this group; it was reverted.)
-3. **`airgap`** — #4, #9, #13, #14, #17, #21, #24, #29, #30, #1. The largest group; may need splitting again.
-4. **`oc3` / `oc6`** — #8, #16.
+Supersedes the earlier four-bucket ordering. Grouped into reviewable PRs and
+ordered so each lands before anything depending on it.
+
+Upstream has **no** `imageDigestSources`, **no** `additionalTrustBundle` and no
+PAR or boot-artifact handling at all. Air-gap was not partially supported — the
+mirror configuration was never emitted. PR 1 is the fix for that.
+
+| # | PR | Why air-gap needs it | Entries | Depends on | Size |
+|---|---|---|---|---|---|
+| 1 | Emit mirror config in install-config — imageDigestSources, additionalTrustBundle(+Policy), generated ImageTagMirrorSet, example imageset | Nothing pulls from a mirror without it | 4, 9, 21, 24 (26, 27 folded in) | — | Medium |
+| 2 | Host boot artifacts in Object Storage — boot_artifacts module, rootfs + ISO upload, PARs via full_path, RM-compatible URL inputs | A disconnected cluster cannot fetch the rootfs from the internet | 13, 14, 17, 30, `7f1753c`, `a06d6ef` | PR 1 | Medium |
+| 3 | Mount the trust bundle into the CCM and CSI pods | Without it the CCM fails x509, nodes stay tainted, CNI never starts. Validated on a live OC6 cluster | 33 | PR 1 | Small |
+| 4 | Output manifests individually, not one multi-doc YAML | The agent installer cannot consume `dynamic_custom_manifest` | 6 | — | Small |
+| 5 | NTP via additionalNTPSources | No public NTP in an enclave; clock skew breaks TLS | 23 | — | Small |
+| 6 | origin-cli 4.20 → 4.22 | Genuine upstream pin; mismatched tag 404s against a mirror | 25 | — | Trivial |
+| 7 | Remove the webserver module | PXE concept that cannot work on OCI; misleading for air-gap | 1, 5 | — | Small |
+| 8 | Non-commercial realm support — templatized CCM, realm endpoints, OCIR domain | OC3/OC6 API endpoints differ | 12 | — | Medium |
+| 9 | Autoscaler air-gap — configurable artifact sources, Object Storage hosting | Four runtime fetches from github.com | `ac6c574`, `dfb4b0e`, `b003540` | PR 2; blocked on Oracle | Large |
+| 10 | Disable OCA in Gov Cloud | No marketplace in OC3/OC6 | 8 | — | Trivial |
+| 11 | FIPS support | Not air-gap, but commonly required alongside | 2 | — | Small |
+| 12 | OCI Vault secrets operator | Independent feature | 11 | — | Small |
+
+### Order of submission
+
+**4, 6, 5** first — trivial, uncontroversial, and they rebuild review momentum
+after #88 was closed as too large. Then **1**, then **2 and 3** together since 3
+is useless without 1. Then **7, 8, 10**. Hold **9** until Oracle answers the
+outstanding questions.
+
+### Two notes on grouping
+
+Entries 26 (the `indent()` YAML bug) and 27 (PAR `depends_on`) fix code we wrote,
+and upstream does not have that code. They are folded into PRs 1 and 2 rather
+than submitted separately — the right move is to write it correctly the first
+time.
+
+Entries 19 and 20 (IMDS realm detection, removing the hardcoded realm map) are
+largely obsoleted by `7f1753c`. The provider's `full_path` is realm-correct on
+its own, so most of that machinery should never reach upstream.
 
 `local` entries stay in the fork.

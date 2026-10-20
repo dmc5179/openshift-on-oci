@@ -4,7 +4,10 @@
 **Type:** GitHub issue (not yet filed)
 **Verified against:** `upstream/main` at `4944984` (release v1.6.1, 2026-08-12)
 
-Status: **drafted, not yet filed.**
+Status: **FILED 2026-10-19** as oracle-quickstart/oci-openshift#90
+https://github.com/oracle-quickstart/oci-openshift/issues/90
+
+The "Notes for us" section below was excluded from the filed body.
 
 ---
 

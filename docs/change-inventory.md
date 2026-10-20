@@ -150,19 +150,21 @@ outstanding questions.
 | 2 | [#95](https://github.com/oracle-quickstart/oci-openshift/pull/95) | +185/−13 | Boot artifacts in Object Storage |
 | 8 | [#96](https://github.com/oracle-quickstart/oci-openshift/pull/96) | +306/−8 | CCM template + realm endpoints |
 | 3 | [#97](https://github.com/oracle-quickstart/oci-openshift/pull/97) | +78/−0 | CA mount — stacked on #94 and #96 |
-| 11 | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) | +25/−1 | FIPS — branched from main |
+| 11 | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) | +26/−2 | FIPS + proxy rendering fix — branched from main |
 
 Remaining: **7** (waiting on #95 to land), **12** (ready), **9** and **10**
 (blocked on Oracle).
 
-### Found while testing, not yet filed
+### Found while testing, fixed in #98
 
-`shared_modules/manifest/locals.tf:343` — `trimspace()` on the proxy heredoc
-strips its leading newline, so with `set_proxy = true` the block is concatenated
-onto the `cloudControllerManager` value and the rendered install-config does not
-parse (`mapping values are not allowed here`). Pre-existing on `main`, unrelated
-to anything we added. Raised as an aside in #98; send a one-line fix if Oracle
-confirms they are not already carrying one.
+`shared_modules/manifest/locals.tf:343` — the proxy heredoc is interpolated at
+the end of the `cloudControllerManager` line and its body starts directly with
+`proxy:`, so with `set_proxy = true` the two run together and the rendered
+install-config does not parse (`mapping values are not allowed here`).
+Pre-existing on `main`, unrelated to anything we added. Folded into #98 as a
+second commit rather than filed separately: same expression, same four-way test
+matrix, and it would have been odd to add a flag whose matrix includes a
+combination documented as broken.
 
 ### Two notes on grouping
 

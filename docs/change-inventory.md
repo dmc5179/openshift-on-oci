@@ -117,19 +117,19 @@ Upstream has **no** `imageDigestSources`, **no** `additionalTrustBundle` and no
 PAR or boot-artifact handling at all. Air-gap was not partially supported — the
 mirror configuration was never emitted. PR 1 is the fix for that.
 
-| # | PR | Why air-gap needs it | Entries | Depends on | Size |
-|---|---|---|---|---|---|
+| # | PR | Why air-gap needs it | Entries | Depends on | Size | Status |
+|---|---|---|---|---|---|---|
 | 1 | Emit mirror config in install-config — imageDigestSources, additionalTrustBundle(+Policy), generated ImageTagMirrorSet, example imageset | Nothing pulls from a mirror without it | 4, 9, 21, 24 (26, 27 folded in) | — | Medium |
 | 2 | Host boot artifacts in Object Storage — boot_artifacts module, rootfs + ISO upload, PARs via full_path, RM-compatible URL inputs | A disconnected cluster cannot fetch the rootfs from the internet | 13, 14, 17, 30, `7f1753c`, `a06d6ef` | PR 1 | Medium |
-| 3 | Mount the trust bundle into the CCM and CSI pods | Without it the CCM fails x509, nodes stay tainted, CNI never starts. Validated on a live OC6 cluster | 33 | PR 1 | Small |
+| 3 | Mount the trust bundle into the CCM and CSI pods | Without it the CCM fails x509, nodes stay tainted, CNI never starts. Validated on a live OC6 cluster | 33 | PR 1 | Small | [#97](https://github.com/oracle-quickstart/oci-openshift/pull/97) stacked on #94, #96 |
 | 4 | Output manifests individually, not one multi-doc YAML | The agent installer cannot consume `dynamic_custom_manifest` | 6 | — | Small |
 | 5 | NTP via additionalNTPSources | No public NTP in an enclave; clock skew breaks TLS | 23 | — | Small |
 | 6 | origin-cli 4.20 → 4.22 | Genuine upstream pin; mismatched tag 404s against a mirror | 25 | — | Trivial |
 | 7 | Remove the webserver module | PXE concept that cannot work on OCI; misleading for air-gap | 1, 5 | — | Small |
 | 8 | Non-commercial realm support — templatized CCM, realm endpoints, OCIR domain | OC3/OC6 API endpoints differ | 12 | — | Medium |
 | 9 | Autoscaler air-gap — configurable artifact sources, Object Storage hosting | Four runtime fetches from github.com | `ac6c574`, `dfb4b0e`, `b003540` | PR 2; blocked on Oracle | Large |
-| 10 | Disable OCA in Gov Cloud | No marketplace in OC3/OC6 | 8 | — | Trivial |
-| 11 | FIPS support | Not air-gap, but commonly required alongside | 2 | — | Small |
+| 10 | Disable OCA in Gov Cloud | No marketplace in OC3/OC6 | 8 | **blocked on Oracle** | Trivial | Waiting on Oracle to confirm whether a marketplace exists in OC3/OC6 at all, or whether the commercial OCA image can be pulled into those realms. The fix depends on the answer. |
+| 11 | FIPS support | Not air-gap, but commonly required alongside | 2 | — | Small | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) branched from main |
 | 12 | OCI Vault secrets operator | Independent feature | 11 | — | Small |
 
 ### Order of submission
@@ -138,6 +138,31 @@ mirror configuration was never emitted. PR 1 is the fix for that.
 after #88 was closed as too large. Then **1**, then **2 and 3** together since 3
 is useless without 1. Then **7, 8, 10**. Hold **9** until Oracle answers the
 outstanding questions.
+
+### Submitted so far
+
+| Plan # | PR | Scope | Note |
+|---|---|---|---|
+| 4 | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) | +117/−0 | Individual manifest outputs |
+| 6 | [#92](https://github.com/oracle-quickstart/oci-openshift/pull/92) | +3/−3 | origin-cli 4.22 |
+| 5 | [#93](https://github.com/oracle-quickstart/oci-openshift/pull/93) | +24/−11 | NTP via additionalNTPSources |
+| 1 | [#94](https://github.com/oracle-quickstart/oci-openshift/pull/94) | +90/−1 | Mirror config + ITMS |
+| 2 | [#95](https://github.com/oracle-quickstart/oci-openshift/pull/95) | +185/−13 | Boot artifacts in Object Storage |
+| 8 | [#96](https://github.com/oracle-quickstart/oci-openshift/pull/96) | +306/−8 | CCM template + realm endpoints |
+| 3 | [#97](https://github.com/oracle-quickstart/oci-openshift/pull/97) | +78/−0 | CA mount — stacked on #94 and #96 |
+| 11 | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98) | +25/−1 | FIPS — branched from main |
+
+Remaining: **7** (waiting on #95 to land), **12** (ready), **9** and **10**
+(blocked on Oracle).
+
+### Found while testing, not yet filed
+
+`shared_modules/manifest/locals.tf:343` — `trimspace()` on the proxy heredoc
+strips its leading newline, so with `set_proxy = true` the block is concatenated
+onto the `cloudControllerManager` value and the rendered install-config does not
+parse (`mapping values are not allowed here`). Pre-existing on `main`, unrelated
+to anything we added. Raised as an aside in #98; send a one-line fix if Oracle
+confirms they are not already carrying one.
 
 ### Two notes on grouping
 

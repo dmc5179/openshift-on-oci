@@ -1,5 +1,14 @@
 # OpenShift Oracle New Region — Analysis Report
 
+> **The operator-facing parts of this now live in the fork.** The region
+> metadata format, `~/.oci/regions-config.json` versus `OCI_REGION_METADATA`,
+> and the related SDK environment variables are in the "OCI realm settings"
+> section of `docs/disconnected-prerequisites.md` in dmc5179/oci-openshift,
+> checked against the Go and Python SDK source. The CA handling is in its
+> "Realms with their own certificate authority" section. One correction to
+> what follows: the OCI CLI does not read `OCI_DEFAULT_CERTS_PATH`; it reads
+> `OCI_CLI_CERT_BUNDLE`. This document remains as the background analysis.
+
 ---
 
 ## Table of Contents

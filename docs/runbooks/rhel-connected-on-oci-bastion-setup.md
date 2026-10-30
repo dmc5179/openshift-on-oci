@@ -161,56 +161,20 @@ On an internet-connected system, `terraform init` downloads providers automatica
 
 When connected to the internet, simply running `terraform init` inside a stack directory downloads and caches all required providers. No manual provider installation is needed. Skip to [Section 7](#7-download-the-oci-openshift-terraform-stacks).
 
-### Manual Pre-download (optional — useful if preparing for later disconnected use)
+### Preparing for later disconnected use
 
-If you want to create a local provider mirror for later transfer to an air-gapped environment, use the included `oci-terraform-offline.sh` script from this repo:
+To carry Terraform, the providers and the stacks into an air-gapped
+environment, use the offline bundle in the oci-openshift repo:
+`scripts/build-offline-bundle.sh` on a connected host and
+`scripts/install-offline-bundle.sh` on the bastion. See
+[terraform-offline-init.md](https://github.com/dmc5179/oci-openshift/blob/disconnected/docs/terraform-offline-init.md).
 
-```bash
-./oci-terraform-offline.sh --output-dir ./oci-terraform-offline
-```
-
-Or manually download and set up a filesystem mirror:
-
-```bash
-OCI_PROVIDER_VERSION="6.30.0"
-TIME_PROVIDER_VERSION="0.12.1"
-EXTERNAL_PROVIDER_VERSION="2.3.4"
-
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/oracle/oci/${OCI_PROVIDER_VERSION}/linux_amd64
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/hashicorp/time/${TIME_PROVIDER_VERSION}/linux_amd64
-mkdir -p ~/.terraform.d/plugins/registry.terraform.io/hashicorp/external/${EXTERNAL_PROVIDER_VERSION}/linux_amd64
-
-# Download OCI provider
-wget "https://releases.hashicorp.com/terraform-provider-oci/${OCI_PROVIDER_VERSION}/terraform-provider-oci_${OCI_PROVIDER_VERSION}_linux_amd64.zip" \
-  -O /tmp/oci-provider.zip
-unzip /tmp/oci-provider.zip -d ~/.terraform.d/plugins/registry.terraform.io/oracle/oci/${OCI_PROVIDER_VERSION}/linux_amd64/
-
-# Download time provider
-wget "https://releases.hashicorp.com/terraform-provider-time/${TIME_PROVIDER_VERSION}/terraform-provider-time_${TIME_PROVIDER_VERSION}_linux_amd64.zip" \
-  -O /tmp/time-provider.zip
-unzip /tmp/time-provider.zip -d ~/.terraform.d/plugins/registry.terraform.io/hashicorp/time/${TIME_PROVIDER_VERSION}/linux_amd64/
-
-# Download external provider
-wget "https://releases.hashicorp.com/terraform-provider-external/${EXTERNAL_PROVIDER_VERSION}/terraform-provider-external_${EXTERNAL_PROVIDER_VERSION}_linux_amd64.zip" \
-  -O /tmp/external-provider.zip
-unzip /tmp/external-provider.zip -d ~/.terraform.d/plugins/registry.terraform.io/hashicorp/external/${EXTERNAL_PROVIDER_VERSION}/linux_amd64/
-
-rm -f /tmp/oci-provider.zip /tmp/time-provider.zip /tmp/external-provider.zip
-```
-
-To use the filesystem mirror, create `~/.terraformrc`:
-
-```hcl
-provider_installation {
-  filesystem_mirror {
-    path    = "/home/<user>/.terraform.d/plugins"
-    include = ["registry.terraform.io/*/*"]
-  }
-  direct {
-    exclude = ["registry.terraform.io/*/*"]
-  }
-}
-```
+That replaces the `oci-terraform-offline.sh` script and the manual mirror steps
+that used to be here. They put provider zips inside `<version>/<platform>/`
+directories, where Terraform expects an unzipped provider: `terraform init`
+reported success, then `validate` and `plan` failed with a `fork/exec` error
+because the provider was a zip, not an executable. They also carried no lock
+files.
 
 ---
 

@@ -151,7 +151,7 @@ Create a local provider mirror. The stacks require these providers:
 | `hashicorp/time` | `registry.terraform.io/hashicorp/time` | `>= 0.12.1` |
 | `hashicorp/external` | `registry.terraform.io/hashicorp/external` | `~> 2.3` |
 
-Use the script `oci-terraform-offline.sh` (included in this repo) to download providers and stacks.
+Use `scripts/build-offline-bundle.sh` in the oci-openshift repo to bundle Terraform, the providers and the stacks; see [terraform-offline-init.md](https://github.com/dmc5179/oci-openshift/blob/disconnected/docs/terraform-offline-init.md).
 
 ### Terraform Stacks (from oracle-quickstart/oci-openshift)
 Download from [GitHub releases](https://github.com/oracle-quickstart/oci-openshift/releases):
@@ -174,7 +174,7 @@ Clone these on a connected system and transfer into the enclave:
 | `github.com/oracle-quickstart/oci-openshift` | Terraform stacks, custom manifests (CCM/CSI), and configuration files |
 | `github.com/oracle/oci-cloud-controller-manager` | Oracle CCM source (reference for manifest customization) |
 
-Use the script `oci-github-offline.sh` (included in this repo) to clone repositories.
+The offline bundle from `scripts/build-offline-bundle.sh` includes the oci-openshift repo itself. The CCM repository is reference material only and is not needed to deploy.
 
 ---
 
@@ -410,5 +410,5 @@ These scripts automate the two-pass terraform workflow. Copy them to the bastion
 
 | Script | Purpose |
 |--------|---------|
-| `oci-terraform-offline.sh` | Downloads Terraform binary, providers, and OCI Terraform stacks for offline use |
-| `oci-github-offline.sh` | Clones required Git repositories for offline use |
+| `scripts/build-offline-bundle.sh` (oci-openshift repo) | Bundles Terraform, providers, the repo and optionally the OpenShift clients for offline use |
+| `scripts/install-offline-bundle.sh` (oci-openshift repo) | Installs that bundle on the disconnected bastion |

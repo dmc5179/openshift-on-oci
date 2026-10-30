@@ -22,19 +22,13 @@ here would help someone deploy, it moves to the fork and is deleted here.
 | `docs/analysis/` | Investigations: new-region support, CCM enhancements, Gov Cloud OCA |
 | `docs/diagnostics/` | Notes from debugging specific clusters |
 
-## Still to migrate to the fork
-
-| Path | Plan |
-|---|---|
-| `imageset-config.yaml` | Has 10 images the fork's `docs/imageset-config.yaml` lacks: the autoscaler runtime images (cert-manager x3, cluster-api, cluster-api-provider-oci, cluster-autoscaler), the deployer image, UBI, support-tools and must-gather. Fold them in, then delete. |
-| `docs/runbooks/ocp-on-oci-terraform-quickstart.md` | Overlaps the fork's `docs/oc6-quickstart.md` and tfvars template. Merge, then delete. |
-| `docs/runbooks/openshift-on-oci-disconnected-prep.md` | Overlaps the fork's `docs/disconnected-bastion-setup.md` and `docs/terraform-offline-init.md`. Merge, then delete. |
-| `docs/runbooks/rhel-connected-on-oci-bastion-setup.md` | RHEL bastion setup. No equivalent in the fork yet. Move it. |
-| `terraform.tfvars.template` | Every variable in it is already in the fork's `openshift-on-oci.tfvars.template`. Delete. |
-| `rhel-on-oci-cloud-init.yaml` | Seven-line cloud-init for a RHEL bastion. Move with the bastion setup runbook. |
-
-## Done
+## Migrated to the fork
 
 | Was here | Now in the fork |
 |---|---|
 | `oci-terraform-offline.sh`, `oci-github-offline.sh` | `scripts/build-offline-bundle.sh`, `scripts/install-offline-bundle.sh`, tested by `scripts/test-offline-terraform-init.sh`. See `docs/terraform-offline-init.md`. |
+| `imageset-config.yaml` | Merged into `docs/imageset-config.yaml` |
+| `docs/runbooks/openshift-on-oci-disconnected-prep.md` | Rewritten as `docs/disconnected-prerequisites.md` |
+| `docs/runbooks/rhel-connected-on-oci-bastion-setup.md`, `rhel-on-oci-cloud-init.yaml` | `docs/bastion-setup.md` |
+| `docs/runbooks/ocp-on-oci-terraform-quickstart.md` | Not carried over. Its variable table had drifted badly; `openshift-on-oci.tfvars.template`, `variables.tf` and `schema.yaml` describe every variable. |
+| `terraform.tfvars.template` | Not carried over. An older copy of `openshift-on-oci.tfvars.template`. |

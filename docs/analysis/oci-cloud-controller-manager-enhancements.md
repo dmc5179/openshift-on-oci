@@ -106,4 +106,6 @@ The `OCI_REGION_METADATA` value comes from the IMDS query in `shared_modules/met
 
 ## Potential Upstream Enhancement
 
+> **Filed 2026-11-06** as [oracle/oci-cloud-controller-manager#555](https://github.com/oracle/oci-cloud-controller-manager/issues/555), after re-checking against release-1.36 (`93969b5`). Draft and evidence in `docs/oracle-issues/upstream-issue-csi-imds-region-lookup.md`.
+
 The CSI driver not calling `EnableInstanceMetadataServiceLookup()` appears to be an oversight rather than an intentional design choice — the CCM calls it, and both drivers share the same config parsing code. Filing an upstream issue to add the call to the CSI driver's `init()` or `main()` would eliminate the asymmetry and make `OCI_REGION_METADATA` injection optional for environments where IMDS is available.

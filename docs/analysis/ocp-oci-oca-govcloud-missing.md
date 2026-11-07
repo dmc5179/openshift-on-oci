@@ -1,5 +1,17 @@
 # Oracle Cloud Agent (OCA) Unavailable in OCI Gov Cloud
 
+> **Correction, 2026-11-06.** OC3 *does* have a Marketplace. The 404 below came
+> from calling the listings API without a compartment. With
+> `--compartment-id`, `oci marketplace listing list` in us-gov-ashburn-1
+> returns 453 listings. The conclusion for OCA still stands, for a different
+> reason: none of the 453 is Oracle Cloud Agent, OpenShift or Red Hat, and
+> every one is a VM `IMAGE` or an `ORCHESTRATION` (Resource Manager) package —
+> there are no container-image listings at all. The commercial listing OCID
+> still returns 404, and the tenancy has no OCA repository in OCIR. So OCA
+> cannot be obtained through the OC3 Marketplace. The question for Oracle is
+> now whether OCA will be published to the OC3 Marketplace, or can be pushed
+> to a tenancy's OCIR some other way, not whether a Marketplace exists.
+
 ## Summary
 
 The OCI Marketplace Listing API is **not available** in OCI Gov Cloud (realm `oc3`, region `us-gov-ashburn-1`). This means the Oracle Cloud Agent (OCA) container image cannot be resolved via the Marketplace, and the upstream `oracle-quickstart/oci-openshift` terraform will fail during `terraform apply` if the OCA module is not gated.

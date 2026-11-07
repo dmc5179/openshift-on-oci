@@ -161,7 +161,7 @@ fix for that.
 | 7 | Remove the webserver module | PXE concept that cannot work on OCI | 1, 5 | PR 2 | Small | Not submitted; waits on #95 |
 | 8 | Non-commercial realm support | OC3/OC6 API endpoints differ | 12 | — | Medium | [#96](https://github.com/oracle-quickstart/oci-openshift/pull/96) |
 | 9 | Autoscaler air-gap | Four runtime fetches from github.com | 35 | PR 2 | Large | **Blocked on Oracle**: clarifying questions delivered 2026-10-14, no answer |
-| 10 | Disable OCA in Gov Cloud | No marketplace in OC3/OC6 | 8 | — | Trivial | **Blocked on Oracle**: does a marketplace exist in OC3/OC6, or can the commercial OCA image be used? |
+| 10 | Disable OCA in Gov Cloud | OC3 Marketplace has no OCA listing | 8 | — | Trivial | **Blocked on Oracle**. Checked 2026-11-06: OC3 has a Marketplace (453 listings, needs `--compartment-id`) but no OCA and no container-image listings at all. Ask Oracle whether OCA will be published there, or how to get it into a tenancy's OCIR. OC6 unchecked. |
 | 11 | FIPS support | Commonly required alongside air-gap | 2 | — | Small | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98), with the proxy rendering fix |
 | 12a | Example ImageSetConfiguration | Users have no list of what to mirror | 9, part of 11 | — | Small | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99), rebased on v1.6.2 |
 | 12b | OCI Vault secrets operator | No air-gap justification | part of 11 | — | Small | **Parked** — see below |

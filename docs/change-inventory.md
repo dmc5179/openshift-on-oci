@@ -45,7 +45,7 @@ deploying disconnected are no longer assumed to stay here.
 | 5 | Remove webserver references (PXE concept, invalid on OCI) | `cf266d9` | `ba41d91` | `upstream-fix` | Plan PR 7, not submitted (waits on #95) |
 | 6 | Output manifests individually, not one multi-doc YAML | `03b67b2` | `4a9ace6` | `upstream-fix` | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) |
 | 7 | Ignore terraform state files | `6590951` | `dca3b82` | `local` | n/a |
-| 8 | Disable OCA by default in Gov Cloud (no marketplace) | `010308c` | `abe509e` | `oc3` | Plan PR 10, **blocked on Oracle** |
+| 8 | Disable OCA by default in Gov Cloud (no marketplace) | `010308c` | `abe509e` | `oc3` | Reworked as [#100](https://github.com/oracle-quickstart/oci-openshift/pull/100) |
 | 9 | Example `imageset-config.yaml` for oc-mirror | `d93fe86` | `536e71a` | `airgap` | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99) |
 | 10 | Deployment container image (Containerfile, build script) | `34af3e5` `77e45f9` `f14950d` `433e2e2` `d323573` `302079f` `13cb4a3` `c403c60` | — | `local` | **Removed** in `881ca27` |
 | 11 | Secrets operator / OCI Vault integration | `c85cbf4` | `8695f8d` | `upstream-fix` | Split: imageset part in #99; Vault part parked (12b) |
@@ -161,7 +161,7 @@ fix for that.
 | 7 | Remove the webserver module | PXE concept that cannot work on OCI | 1, 5 | PR 2 | Small | Not submitted; waits on #95 |
 | 8 | Non-commercial realm support | OC3/OC6 API endpoints differ | 12 | — | Medium | [#96](https://github.com/oracle-quickstart/oci-openshift/pull/96) |
 | 9 | Autoscaler air-gap | Four runtime fetches from github.com | 35 | PR 2 | Large | **Blocked on Oracle**: clarifying questions delivered 2026-10-14, no answer |
-| 10 | Disable OCA in Gov Cloud | OC3 Marketplace has no OCA listing | 8 | — | Trivial | **Blocked on Oracle**. Checked 2026-11-06: OC3 has a Marketplace (453 listings, needs `--compartment-id`) but no OCA and no container-image listings at all. Ask Oracle whether OCA will be published there, or how to get it into a tenancy's OCIR. OC6 unchecked. |
+| 10 | Fail clearly when the OCA image cannot be found | With OCA on, the stack renders a DaemonSet for a nonexistent image; in OC3 that is the normal outcome | 8 | — | Small | [#100](https://github.com/oracle-quickstart/oci-openshift/pull/100), from main. Reframed 2026-11-06: OCA is already off by default upstream and the OC3 lookup returns empty rather than failing, so the real bug is the `no-image-found` guard that never matches. Whether OCA will be published to the OC3 Marketplace is still open with Oracle (Google Doc item 4). |
 | 11 | FIPS support | Commonly required alongside air-gap | 2 | — | Small | [#98](https://github.com/oracle-quickstart/oci-openshift/pull/98), with the proxy rendering fix |
 | 12a | Example ImageSetConfiguration | Users have no list of what to mirror | 9, part of 11 | — | Small | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99), rebased on v1.6.2 |
 | 12b | OCI Vault secrets operator | No air-gap justification | part of 11 | — | Small | **Parked** — see below |

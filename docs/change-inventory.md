@@ -7,8 +7,8 @@ submitted upstream as small, scoped PRs.
 - **Fork point:** `008a531` (upstream Release v1.6.0, 2026-07-30)
 - **Upstream baseline merged into `disconnected`:** `4944984` (v1.6.1), merged
   2026-10-14, tagged `upstream-merge/v1.6.1`
-- **Latest upstream:** `8bed062` (v1.6.2, 2026-10-22). **Not yet merged into
-  `disconnected`**; see [v1.6.2](#upstream-v162-not-yet-merged) below.
+- **Latest upstream:** `8bed062` (v1.6.2, 2026-10-22), merged into
+  `disconnected` as `0397ff0` on 2026-11-07; see [v1.6.2](#upstream-v162) below.
 - **Working branch:** `disconnected`
 - **Frozen:** `oc3-support` at `40c6221`, tagged `archive/oc3-support-pr88` —
   the state submitted as PR #88, now closed
@@ -125,23 +125,27 @@ the tests and the disconnected docs reference `private_registry`,
 go upstream once #94, #95 and #97 have landed, and should go as one
 docs-and-tooling PR rather than piecemeal.
 
-## Upstream v1.6.2 (not yet merged)
+## Upstream v1.6.2
 
-`8bed062`, released 2026-10-22. It has not been merged into `disconnected`.
-A merge conflicts in four files: `custom_manifests/manifests/01-oci-ccm.yml`,
-`custom_manifests/manifests/01-oci-csi.yml`, `docs/STORAGE.md` and
-`terraform-stacks/shared_modules/manifest/locals.tf`. What it changes that
-matters here:
+`8bed062`, released 2026-10-22, merged into `disconnected` as `0397ff0` on
+2026-11-07. Conflicts were in `custom_manifests/manifests/01-oci-{ccm,csi}.yml`,
+`docs/STORAGE.md` and `shared_modules/manifest/locals.tf`, all from upstream
+moving every driver version to `ghcr.io/oracle` images.
 
-- CCM/CSI driver: default `v1.36.0`, adds `v1.35.0`, validation limiting
-  `oci_driver_version` to those two and `v1.34.0`, and every version mapped to
-  `ghcr.io/oracle/...` (see the open question above).
-- Removes `07-configure-bm-vlan-mtu.yml` and its sources.
+**Driver version: `disconnected` now uses v1.35.0**, not the developer
+v1.34.0 build and not the stack default v1.36.0. Upstream's README maps
+OpenShift 4.22 (Kubernetes 1.35; the OC3 cluster reports v1.35.6) to v1.35.0
+and lists v1.36.0 against OpenShift 5.0 as a planned target. The v1.35.0
+image (2026-06-17) is newer than the 2026-04-01 developer build that carried
+the fix the official v1.34.0 lacks. The tfvars template sets it and the
+imageset mirrors it. The open question to Oracle about v1.6.2 mapping
+v1.34.0 to the unfixed image (Google Doc item 1) no longer blocks us.
 
-`disconnected`'s imageset, ImageTagMirrorSet repos and docs assume the
-developer v1.34.0 image, so they change with the merge. The PR branches
-#91 and #99 were rebased onto v1.6.2 on 2026-10-28; #92–#98 merge and
-validate on it as they are.
+Follow-on: v1.6.2 removed `07-configure-bm-vlan-mtu.yml`, so the
+`manifest_machineconfig_bm_vlan_mtu` outputs and the required-manifest entry
+in `generate-ocp-artifacts.sh` were removed in the merge. `a4f8280` then
+brought the proxy rendering fix from #98, which `disconnected` lacked.
+Both test scripts pass on the merged branch.
 
 ## Submission plan
 

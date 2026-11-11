@@ -1,7 +1,27 @@
 # OC3 vs OC6 — boot volume / iPXE diagnostic commands
 
-> **STATUS: HYPOTHESIS DISPROVED — 2026-10-09. Retained for the commands and as a record of
-> what was eliminated. Do not re-run expecting a result.**
+> **RESOLVED — 2026-11-10. The `ip=` kernel argument comes from the Agent-based Installer
+> itself, is present in OC3 as well, and is cosmetic.**
+>
+> - **Source:** openshift/assisted-service PR #7888, *"MGMT-21063: Use mac address to configure
+>   dhcp on kargs"* (merged 2025-08-04), the fix for NIC names changing between the discovery
+>   boot and the installed boot. It builds `ip=<MAC>:dhcp` with the MAC's colons replaced by
+>   hyphens (`strings.ReplaceAll(nic.MacAddress, ":", "-")`; colons are field separators in
+>   `ip=`) and passes it to `coreos-installer` as `--append-karg`. assisted-service runs inside
+>   the Agent-based Installer, which is why the earlier search of the openshift/installer source,
+>   the ISO and the Terraform found nothing.
+> - **OC3 has it too.** Checked 2026-11-10 on the OC3 cluster (Agent-based, OpenShift 4.22.9),
+>   on a worker and a control plane node: `ip=<MAC>:dhcp` in `/proc/cmdline` and persistent in
+>   `rpm-ostree kargs`, hyphenated, matching the node's primary NIC.
+> - **Cosmetic.** On the same nodes `systemd-network-generator` is failed, but NetworkManager
+>   has the primary NIC connected. RHCOS uses NetworkManager; the units
+>   `systemd-network-generator` would have written are never used.
+>
+> Two statements in the "Why" section below were wrong and are corrected inline: that OC3
+> nodes lack the argument, and that its length leaves the node without network configuration.
+>
+> **Earlier status: HYPOTHESIS DISPROVED — 2026-10-09. Retained for the commands and as a
+> record of what was eliminated. Do not re-run expecting a result.**
 >
 > The theory below was that the custom image fell back to iSCSI boot, triggering OCI's default
 > iPXE script, which injected the `ip=` kernel argument. It was tested and failed:
@@ -22,7 +42,8 @@
 > `systemd-networkd` units, and RHCOS uses NetworkManager, so nothing consumes them.
 >
 > The malformed `ip=` argument remains unexplained and may still be worth reporting to Oracle,
-> but it is not a cluster-breaking issue.
+> but it is not a cluster-breaking issue. *(Superseded 2026-11-10: explained, see above. It is
+> not Oracle's, and not malformed: the hyphenated MAC form is deliberate.)*
 
 Short set of read-only OCI CLI queries to run in **OC6** and compare against **OC3**.
 Everything here is a `get`/`list`; nothing modifies state.
@@ -30,18 +51,24 @@ Everything here is a `get`/`list`; nothing modifies state.
 ## Why
 
 OC6 control plane nodes boot with a kernel argument that OC3 nodes do not have:
+*(Wrong: OC3 nodes have the same argument. Checked 2026-11-10.)*
 
 ```
-ip=02-00-17-00-24-27:dhcp
+ip=<MAC>:dhcp      (the MAC written with hyphens)
 ```
 
 The "interface name" is a MAC address with hyphens. At 17 characters it exceeds the Linux
 `IFNAMSIZ` limit of 15, so `systemd-network-generator` fails with *"Failed to start Generate
 network units from kernel command line"* and the node gets no network configuration.
+*(Wrong: the argument names the NIC by MAC, not by interface name, so IFNAMSIZ does not
+apply, and the node is configured by NetworkManager, which handles it. Only the unused
+`systemd-network-generator` unit fails.)*
 
 The argument is **not** in the agent ISO (verified by extracting `isolinux.cfg` and `grub.cfg`
 and by raw-scanning both the agent ISO and the stock RHCOS ISO), not in the generated
-manifests, not in the OpenShift installer source, and not in the Terraform.
+manifests, not in the OpenShift installer source, and not in the Terraform. *(All true: it is
+added at install time by assisted-service, inside the Agent-based Installer. See the top of
+this file.)*
 
 Working hypothesis: it is injected at boot by **OCI's default iPXE script**. Per Oracle's SDK
 documentation, `PARAVIRTUALIZED` is the default boot volume type *for platform images only* —

@@ -1,7 +1,7 @@
 # Draft docs bug: OCI "disconnected" Agent-based install actually requires internet egress (firewall allowlist or proxy)
 
-**Status:** draft for Dan to file (2026-11-10). Suggested project: OSDOCS. Link to OSDOCS-23407
-(OCPSTRAT-3871) as "relates to". Sibling drafts:
+**Status:** filed 2026-11-10 as [OSDOCS-24411](https://redhat.atlassian.net/browse/OSDOCS-24411), linked "relates to" OSDOCS-23407
+(OCPSTRAT-3871). Sibling drafts:
 [condensed-manifest](osdocs-oci-condensed-manifest-removed.md),
 [firewall table](osdocs-oci-firewall-table-errors.md).
 

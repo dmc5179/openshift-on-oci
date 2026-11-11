@@ -1,6 +1,6 @@
 # Draft docs bug: OCI firewall allowlist table lists "port" instead of 443 and an obsolete registry
 
-**Status:** draft for Dan to file (2026-11-10). Suggested project: OSDOCS. Related docs
+**Status:** filed 2026-11-10 as [OSDOCS-24410](https://redhat.atlassian.net/browse/OSDOCS-24410), linked "relates to" OSDOCS-23407. Related docs
 epic: OSDOCS-23407 (OCPSTRAT-3871). Sibling drafts:
 [condensed-manifest](osdocs-oci-condensed-manifest-removed.md),
 [disconnected vs. proxy](osdocs-oci-disconnected-requires-egress.md).

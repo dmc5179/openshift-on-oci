@@ -43,7 +43,7 @@ deploying disconnected are no longer assumed to stay here.
 | 3 | Bastion preflight validation script | `4695a71` | — | `tooling` | not submitted |
 | 4 | imageDigestSources + additionalTrustBundle | `e90e745` | `5a3656e` | `airgap` | [#94](https://github.com/oracle-quickstart/oci-openshift/pull/94) |
 | 5 | Remove webserver references (PXE concept, invalid on OCI) | `cf266d9` | `ba41d91` | `upstream-fix` | Plan PR 7, not submitted (waits on #95) |
-| 6 | Output manifests individually, not one multi-doc YAML | `03b67b2` | `4a9ace6` | `upstream-fix` | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) |
+| 6 | Output manifests individually, not one multi-doc YAML | `03b67b2` | `4a9ace6` | `upstream-fix` | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) **closed 2026-11-10**: premise false, see note below |
 | 7 | Ignore terraform state files | `6590951` | `dca3b82` | `local` | n/a |
 | 8 | Disable OCA by default in Gov Cloud (no marketplace) | `010308c` | `abe509e` | `oc3` | Reworked as [#100](https://github.com/oracle-quickstart/oci-openshift/pull/100) |
 | 9 | Example `imageset-config.yaml` for oc-mirror | `d93fe86` | `536e71a` | `airgap` | [#99](https://github.com/oracle-quickstart/oci-openshift/pull/99) |
@@ -81,6 +81,19 @@ deploying disconnected are no longer assumed to stay here.
 | — | Remove bastion doc from PR scope | — | `66129d6` | *drop* | PR housekeeping, obsolete |
 
 ## Notes on specific entries
+
+**#6 / PR #91 rested on a wrong premise and was withdrawn on 2026-11-10.** The
+Agent-based Installer does accept one multi-document file in `openshift/`:
+tested with `openshift-install agent create image` 4.22.18, the stack's
+`dynamic_custom_manifest` written to a single file with `terraform output
+-raw` was split into 28 separate manifests in the agent ISO. Written
+*without* `-raw`, Terraform wraps it in `<<EOT ... EOT` and the installer
+fails with `could not decode YAML ... Error reading multiple YAMLs`, which is
+the likely origin of the August finding in `03b67b2`. Red Hat's 4.21/4.22
+docs also tell users to save that output as a single `manifest.yaml`. The
+per-file outputs stay in the fork as a convenience; the fork docs that say
+the installer needs one manifest per file are still to be corrected.
+
 
 **#22 was reverted on 2026-10-14.** Oracle engineering confirmed the official
 `ghcr.io/oracle/cloud-provider-oci:v1.34.0` is missing a required fix, and that
@@ -159,7 +172,7 @@ fix for that.
 | 1 | Emit mirror config in install-config | Nothing pulls from a mirror without it | 4, 24 (26 folded in) | — | Medium | [#94](https://github.com/oracle-quickstart/oci-openshift/pull/94) |
 | 2 | Host boot artifacts in Object Storage | A disconnected cluster cannot fetch the rootfs from the internet | 13, 14, 17, 30, 34 (27 folded in) | — | Medium | [#95](https://github.com/oracle-quickstart/oci-openshift/pull/95) |
 | 3 | Mount the trust bundle into the CCM and CSI pods | Without it the CCM fails x509 behind a private CA | 33 | PR 1, PR 8 | Small | [#97](https://github.com/oracle-quickstart/oci-openshift/pull/97), stacked on #94 and #96 |
-| 4 | Output manifests individually | The agent installer cannot consume `dynamic_custom_manifest` | 6 | — | Small | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) |
+| 4 | Output manifests individually | — | 6 | — | Small | [#91](https://github.com/oracle-quickstart/oci-openshift/pull/91) **closed 2026-11-10**: the agent installer does take a combined file |
 | 5 | NTP via additionalNTPSources | No public NTP in an enclave; clock skew breaks TLS | 23 | — | Small | [#93](https://github.com/oracle-quickstart/oci-openshift/pull/93) |
 | 6 | origin-cli 4.20 → 4.22 | Mismatched tag 404s against a mirror | 25 | — | Trivial | [#92](https://github.com/oracle-quickstart/oci-openshift/pull/92) |
 | 7 | Remove the webserver module | PXE concept that cannot work on OCI | 1, 5 | PR 2 | Small | Not submitted; waits on #95 |

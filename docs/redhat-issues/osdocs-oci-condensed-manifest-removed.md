@@ -1,7 +1,9 @@
 # Draft docs bug: Agent-based OCI install points to condensed-manifest.yml, which no longer exists
 
 **Status:** draft for Dan to file (2026-11-10). Suggested project: OSDOCS. Related docs
-epic: OSDOCS-23407 (OCPSTRAT-3871).
+epic: OSDOCS-23407 (OCPSTRAT-3871). Sibling drafts:
+[firewall table](osdocs-oci-firewall-table-errors.md),
+[disconnected vs. proxy](osdocs-oci-disconnected-requires-egress.md).
 
 ---
 

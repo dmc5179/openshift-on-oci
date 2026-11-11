@@ -47,6 +47,7 @@ Rendered with `helm template` on a connected host:
 ```
 --set secrets-store-csi-driver.install=false
 --set provider.oci.auth.types.workload.enabled=false
+--set provider.enableProfile=false    # added 2026-11-11, see Security notes
 ```
 
 Then four OpenShift problems, each found by deploying and reading the failure:
@@ -101,6 +102,17 @@ spec:
 
 ## Security notes
 
+- **Turn pprof off.** Oracle's chart (`provider.enableProfile: true`) and the
+  provider binary (`-enable-pprof`, default `true`) both enable Go pprof on
+  port 6060, bound to all interfaces. With `hostNetwork: true` that is
+  `*:6060` on every worker: checked on the cluster on 2026-11-11 with
+  `ss -ltnp`, and `/debug/pprof/` answered 200 locally. It was not reachable
+  from the bastion, but anything that can reach a worker's node IP could pull
+  heap dumps from the process that handles the secrets. Render with
+  `--set provider.enableProfile=false` (the manifests in
+  `tests/oci-vault/manifests/` do). The health (8098) and metrics (8198)
+  ports are bound to all interfaces as well.
+
 - `spc_t` and host networking together are a meaningful grant. They are what
   the CCM and CSI driver already need for the same reasons (instance
   metadata, host sockets), and Red Hat's own secrets-store driver pods run
@@ -111,26 +123,10 @@ spec:
   `where target.vault.id = '...'`, and keep the vault dedicated to the
   cluster's workloads.
 
-## Left on the cluster for step 4
+## Removed from the cluster
 
-All labelled `oci-vault-test=12b` except the CSV and the SCC role binding:
-OperatorGroup and Subscription in `openshift-cluster-csi-drivers`; the CSV
-they own; `ClusterCSIDriver` `secrets-store.csi.k8s.io`; SCC
-`oci-secrets-store-provider` and its RoleBinding
-`system:openshift:scc:oci-secrets-store-provider`; the provider DaemonSet,
-ServiceAccount, ClusterRole and ClusterRoleBinding. The `oci-vault-test`
-namespace used for the probe was deleted.
-
-Cleanup, when the test ends:
-
-```bash
-NS=openshift-cluster-csi-drivers
-oc delete clustercsidriver secrets-store.csi.k8s.io
-oc delete ds,sa -n $NS -l oci-vault-test=12b
-oc delete clusterrole,clusterrolebinding -l oci-vault-test=12b
-oc adm policy remove-scc-from-user oci-secrets-store-provider -z oci-secrets-store-csi-driver-provider-sa -n $NS
-oc delete scc oci-secrets-store-provider
-oc delete subscription secrets-store-csi-driver-operator -n $NS
-oc delete csv -n $NS -l operators.coreos.com/secrets-store-csi-driver-operator.$NS
-oc delete operatorgroup openshift-cluster-csi-drivers -n $NS
-```
+Everything from the test was removed on 2026-11-11 with the cleanup above:
+the operator, its CSV and CRDs, the `ClusterCSIDriver`, the SCC and its RBAC,
+the provider DaemonSet, ServiceAccount and RBAC, and the empty directories on
+all six nodes. All nodes Ready and all cluster operators healthy afterwards.
+Reinstall from `tests/oci-vault/manifests/` before running step 4.

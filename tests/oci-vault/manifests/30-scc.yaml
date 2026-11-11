@@ -1,0 +1,82 @@
+# hostmount-anyuid plus runtime/default seccomp, RunAsAny SELinux (for spc_t) and
+# host network. Granted through a labelled ClusterRole/RoleBinding instead of
+# 'oc adm policy add-scc-to-user', so cleanup is a single label selector.
+allowHostDirVolumePlugin: true
+allowHostIPC: false
+allowHostNetwork: true
+allowHostPID: false
+allowHostPorts: true
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: false
+allowedCapabilities: null
+apiVersion: security.openshift.io/v1
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+groups: []
+kind: SecurityContextConstraints
+metadata:
+  annotations:
+    kubernetes.io/description: hostmount-anyuid plus the runtime/default seccomp profile,
+      for the OCI Secrets Store CSI provider DaemonSet.
+  labels:
+    oci-vault-test: 12b
+  name: oci-secrets-store-provider
+priority: null
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+seccompProfiles:
+- runtime/default
+supplementalGroups:
+  type: RunAsAny
+userNamespaceLevel: AllowHostLevel
+users: []
+volumes:
+- configMap
+- csi
+- downwardAPI
+- emptyDir
+- ephemeral
+- hostPath
+- image
+- nfs
+- persistentVolumeClaim
+- projected
+- secret
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: oci-secrets-store-provider-use-scc
+  labels:
+    oci-vault-test: 12b
+rules:
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  resourceNames:
+  - oci-secrets-store-provider
+  verbs:
+  - use
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: oci-secrets-store-provider-use-scc
+  namespace: openshift-cluster-csi-drivers
+  labels:
+    oci-vault-test: 12b
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: oci-secrets-store-provider-use-scc
+subjects:
+- kind: ServiceAccount
+  name: oci-secrets-store-csi-driver-provider-sa
+  namespace: openshift-cluster-csi-drivers

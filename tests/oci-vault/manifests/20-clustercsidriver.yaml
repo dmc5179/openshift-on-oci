@@ -1,0 +1,9 @@
+# Starts the secrets-store-csi-driver-node DaemonSet on every node.
+apiVersion: operator.openshift.io/v1
+kind: ClusterCSIDriver
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: secrets-store.csi.k8s.io
+spec:
+  managementState: Managed

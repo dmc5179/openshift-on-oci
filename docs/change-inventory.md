@@ -91,8 +91,19 @@ tested with `openshift-install agent create image` 4.22.18, the stack's
 fails with `could not decode YAML ... Error reading multiple YAMLs`, which is
 the likely origin of the August finding in `03b67b2`. Red Hat's 4.21/4.22
 docs also tell users to save that output as a single `manifest.yaml`. The
-per-file outputs stay in the fork as a convenience; the fork docs that say
-the installer needs one manifest per file are still to be corrected.
+per-file outputs stay in the fork as a convenience. The fork docs that said
+the installer needs one manifest per file were corrected on 2026-11-11
+(`custom_manifests/README.md`, `docs/STORAGE.md`,
+`docs/disconnected-bastion-setup.md`). Correcting them showed the fork's two
+paths were not equivalent: `dynamic_custom_manifest` lacked the
+ImageTagMirrorSet (#24) and custom CA ConfigMaps (#33), which existed only as
+individual outputs, and `generate-ocp-artifacts.sh` dropped the OCA and
+autoscaler outputs. Both fixed in the fork (`1462b0a`, `ec5e7b1`), so the two
+paths now produce the same manifests. Upstream, #97 already appended the CA
+ConfigMaps to `dynamic_custom_manifest`, but #94 had the ITMS only as a
+separate output that the documented single-file flow and Resource Manager
+never use. #94 now appends it too (`094842d`, explained in a PR comment), and
+#97's branch has merged that (`a4aee08`).
 
 
 **#22 was reverted on 2026-10-14.** Oracle engineering confirmed the official

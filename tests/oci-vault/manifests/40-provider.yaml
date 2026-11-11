@@ -1,0 +1,118 @@
+# Oracle provider: chart 0.5.1 rendered with secrets-store-csi-driver.install=false,
+# provider.oci.auth.types.workload.enabled=false and provider.enableProfile=false,
+# plus hostNetwork, ClusterFirstWithHostNet and seLinuxOptions spc_t.
+# pprof is off: the chart and binary default it on, listening on *:6060, which on
+# the host network exposes heap dumps of a process holding secrets on every worker.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: oci-secrets-store-csi-driver-provider-sa
+  namespace: openshift-cluster-csi-drivers
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: oci-secrets-store-csi-driver-provider-cluster-role
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: oci-secrets-store-csi-driver-provider-cluster-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: oci-secrets-store-csi-driver-provider-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: oci-secrets-store-csi-driver-provider-sa
+  namespace: openshift-cluster-csi-drivers
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/name: oci-secrets-store-csi-driver-provider
+    oci-vault-test: 12b
+  name: oci-secrets-store-csi-driver-provider
+  namespace: openshift-cluster-csi-drivers
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: oci-secrets-store-csi-driver-provider
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: oci-secrets-store-csi-driver-provider
+    spec:
+      containers:
+      - args:
+        - --endpoint=unix:///opt/provider/sockets/oci.sock
+        - --endpoint-permissions=384
+        - --healthz-port=8098
+        - --metrics-port=8198
+        - --metrics-backend=prometheus
+        - --enable-pprof=false
+        image: ghcr.io/oracle/oci-secrets-store-csi-driver-provider:v0.5.1
+        imagePullPolicy: IfNotPresent
+        name: oci-secrets-store-csi-driver-provider
+        ports:
+        - containerPort: 8098
+          name: health-port
+          protocol: TCP
+        - containerPort: 8198
+          name: metrics-port
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 50m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsUser: 0
+          seLinuxOptions:
+            type: spc_t
+          seccompProfile:
+            type: RuntimeDefault
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /opt/provider/sockets
+          name: socket-volume
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: oci-secrets-store-csi-driver-provider-sa
+      serviceAccountName: oci-secrets-store-csi-driver-provider-sa
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - hostPath:
+          path: /var/run/secrets-store-csi-providers
+          type: ''
+        name: socket-volume
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate

@@ -3,8 +3,10 @@ set -uo pipefail
 
 # Steps 4, 5 and 7 of the OCI Vault on OpenShift test plan, run against the
 # OC3 cluster once the tenancy owners have created the test vault (see
-# docs/analysis/oci-vault-openshift-test.md for steps 2-3 and the setup this
-# relies on). Run on the bastion, logged in to the cluster.
+# docs/analysis/oci-vault-openshift-test.md for steps 2-3). The operator, driver
+# and provider were removed after testing; reinstall them first from
+# tests/oci-vault/manifests/ (commands in the analysis doc). Run on the bastion,
+# logged in to the cluster.
 #
 # Usage:
 #   run-step4.sh VAULT_OCID check       mount both secrets; confirm a missing

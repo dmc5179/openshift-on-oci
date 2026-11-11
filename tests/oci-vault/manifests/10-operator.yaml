@@ -1,0 +1,24 @@
+# Red Hat Secrets Store CSI Driver Operator. Wait for the CSV to reach Succeeded
+# before applying 20-clustercsidriver.yaml.
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: openshift-cluster-csi-drivers
+  namespace: openshift-cluster-csi-drivers
+spec: {}
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    oci-vault-test: 12b
+  name: secrets-store-csi-driver-operator
+  namespace: openshift-cluster-csi-drivers
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: secrets-store-csi-driver-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace

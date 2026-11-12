@@ -1,6 +1,6 @@
 # Draft bug: Agent-based Installer drops `imageDigestSources[].sourcePolicy` from the installed cluster's IDMS
 
-**Status:** draft for Dan to file (2026-11-12). Suggested project: OCPBUGS, component
+**Status:** filed 2026-11-12 as [OCPBUGS-140771](https://redhat.atlassian.net/browse/OCPBUGS-140771). Component
 Installer / Agent-based Installation (assisted-service). After filing, add the DIA customer
 link (mdm 1463, affected_by) per the standing rule.
 

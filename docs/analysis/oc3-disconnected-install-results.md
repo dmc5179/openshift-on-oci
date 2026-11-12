@@ -90,6 +90,23 @@ journals.
 9. **Bastion monitoring.** The private subnet only admits the cluster VCN, but the hand-made
    NSG rules gave the bastion SSH and API access to the control plane, so `wait-for` worked.
 
+## Feature tests, 2026-11-12 (matrix B, C, D, F, G; J cancelled)
+
+| Test | Result | Finding |
+|---|---|---|
+| **B. Samples operator** | ✅ Set to `Removed`. 60 → 10 image streams; `ImportImageErrorsExist` cleared. | While `Managed`, the OpenShift API server made **170 direct HTTPS image-stream imports to `registry.redhat.io`** through the NAT. They failed only because the pull secret has no Red Hat credentials. This is non-image-pull egress that `NeverContactSource` does not stop. Setting Samples `Removed` belongs in the disconnected install procedure. |
+| **C. OCA, plan only** | ✅ Confirms PR #100 | With `use_oracle_cloud_agent = true` in OC3, the Marketplace lookup is empty, and the stack still renders the OCA DaemonSet, in both `manifest_oca` and `dynamic_custom_manifest`, with image `<region-key>.ocir.io/<namespace>/no-image-found`. The guard compares the whole path to `no-image-found` and never matches. |
+| **D. CCM load balancers** | ✅ NLB; ✅ classic LB (100 Mbps shape); ❌ flexible LB | Flexible LBs hit the **tenancy limit `lb-flexible-count` = 3, all used by the cluster**. Fixed-shape LBs had capacity. A public NLB is reachable from outside only with `oci-network-load-balancer.oraclecloud.com/is-preserve-source: "false"`: by default OCI preserves the client IP, and the node NSGs and private security list admit only the cluster VCN. Internal LBs land in the public subnet, which has no route back to the bastion VCN (environment routing), so they were verified from inside the VCN. The CCM deleted every LB it created. |
+| **F. CSI File Storage** | ✅ Static RWX across two nodes; ❌ dynamic | Dynamic provisioning fails with `404 NotAuthorizedOrNotFound`: the stack's control plane IAM policy has **no `file-family` permission**, and `STORAGE.md` doesn't mention one. Static mounts need the export root's permissions set: the default root-owned 0755 makes pods running as a random UID get `Permission denied`. |
+| **G. Image registry with storage** | ✅ Registry `Managed` on a 100 Gi `oci-bv` PVC (kept). Docker-strategy build pulled its `FROM` through the mirror, pushed to the internal registry, and the image ran. | Image streams and BuildConfigs created **before** the registry was enabled kept failing with `InvalidOutputReference` ("integrated registry is not configured"), even after the registry, image config, API server and controller-manager were all correct. Fresh objects built fine. Enable the registry before creating build outputs, or recreate them. |
+| **J. Oracle autoscaler** | ⛔ Cancelled | Rule from Dan: tests that add an RHCOS node must use the supported `oc adm node-image create` (ISO with embedded ignition). The autoscaler can't comply: CAPOCI boots a shared RHCOS OpenStack qcow2 and passes a pointer config through instance `user_data` (`cluster-api-provider-oci` `cloud/scope/machine.go`). Red Hat's 4.22 OCI guide doesn't cover it. Also: the fork's Day 1 autoscaler stack has no artifact-hosting module (Day 0 does), and its defaults still fetch from github.com and `kubernetes.github.io`. |
+
+**Boot volume performance (found during C).**
+- **What:** every node's boot volume runs at **10 VPUs/GB**, although the tfvars requests 100 (control plane) and 30 (compute). The deployed v3 file had the same values, so the old cluster was very likely the same.
+- **Why it matters:** OCI doesn't report the value back, so Terraform shows a permanent diff on `source_details.boot_volume_vpus_per_gb`, which **forces replacement of all instances.** Any `terraform apply` of `create-cluster` would rebuild the cluster.
+- **Workaround:** none applied yet; see open items.
+- **Related:** Red Hat's guide recommends 60–100+ VPUs for these environments.
+
 ## Changes made during the run
 
 | Where | Change |
@@ -102,6 +119,17 @@ journals.
 | OC3, new stack | `~/oci-openshift-disconnected` at `b52fd21`; 29 + 39 resources; the cluster above |
 
 ## Open items
+
+0. **`create-cluster` re-apply hazards (found 2026-11-12):**
+   - **Boot volume VPUs.** OCI applied 10, against 100 and 30 requested, and Terraform showed a
+     forced replacement of all instances. Mitigated: the private tfvars now set both VPU values
+     to 10, and the plan no longer replaces instances.
+   - **Tenancy tag defaults.** OCI adds `LandingZone.*` and `Oracle-Tags.*` defined tags to each
+     instance at creation. Terraform wants to remove them, which defers the VNIC lookups and
+     replaces all 27 LB backends (brief API and ingress disruption) on any apply. Still open.
+
+   Fix both in the fork with `lifecycle { ignore_changes }` on the instances (the tag keys and
+   `boot_volume_vpus_per_gb`). Separately, find out why OCI applies 10 VPUs.
 
 1. File the bug draft (finding 1) and add the DIA customer link.
 2. Propose `mirror_source_policy` upstream with PR #94, citing this run and finding 1.

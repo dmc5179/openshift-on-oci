@@ -32,7 +32,7 @@ Baseline: the non-FIPS run in [`oc3-disconnected-install-results.md`](oc3-discon
 | 4.3 Install verification | ✅ All cluster operators Available and not Degraded; 6 nodes Ready; every `[[registry]]` in `registries.conf` is `blocked = true` on every node; chrony selects 169.254.169.254 on every node; 6 `oci://` providerIDs; no `uninitialized` taints |
 | 4.4 CCM and CSI under FIPS | ✅ 3 CCM pods Running. No `x509`, `tls:`, handshake, crypto or FIPS errors in CCM or CSI logs. Paravirtualized and iSCSI volumes attached; OCI reports the iSCSI attachment as `iscsi`, and data was written and read back |
 | 4.5-B Samples | ✅ `Removed`, as in the baseline fix, so no direct pulls from registry.redhat.io |
-| 4.5-D Load balancers | ✅ Classic LB (100 Mbps shape) provisioned and reachable from the bastion. ✅ NLB provisioned and served traffic on its private and public IPs **from a cluster node**. ❌ The NLB was not reachable from the bastion (see note) |
+| 4.5-D Load balancers | ✅ Classic LB (100 Mbps shape) provisioned and reachable from the bastion. ✅ NLB provisioned, served traffic from inside the VCN, and was reachable on its public IP from the bastion once the service had `oci-network-load-balancer.oraclecloud.com/security-list-management-mode: Frontend` (see note) |
 | 4.5-E Snapshot and restore | ✅ `VolumeSnapshotClass` recreated; snapshot ready; restored PVC contains the original data |
 | 4.5-G Registry and build | ✅ Registry `Managed` on a 100 Gi `oci-bv` PVC. A Docker-strategy build pulled its `FROM` through the mirror, pushed to the internal registry, and the image ran |
 | 4.5-H OLM v1 | ✅ `ClusterExtension` for `secrets-store-csi-driver-operator`, from the mirrored ClusterCatalog: Installed, pod Running |
@@ -44,10 +44,16 @@ Kept on the cluster: the registry (Managed, 100 Gi PVC), `oci-bv-snapclass`, the
 
 - **Build timing.** The first build attempt failed with `InvalidOutputReference` because its objects were created just as the registry operator reported Available. New objects created a few minutes later built and ran. This is the same behaviour as the baseline, not a FIPS issue: create image streams and BuildConfigs only after the registry has settled.
 - **NLB annotation.** The CCM rejects `oci-network-load-balancer.oraclecloud.com/is-preserve-source` unless `externalTrafficPolicy: Local` (`annotation cannot be set when externalTrafficPolicy is set to Cluster`). The first attempt was a test-manifest error.
-- **NLB reachability from the bastion.** With `is-preserve-source: "false"` and `externalTrafficPolicy: Local`, the NLB worked from inside the VCN on both IPs, and the kube-proxy health-check endpoint returned 200. It failed from the bastion on both IPs:
-  - The private IP fails because of the known routing gap: the public subnet has no route back to the bastion VCN.
-  - The public front end also failing from the bastion is a network ingress problem, not a FIPS problem. The baseline D test reached it, and the later non-FIPS L regression hit the same failure intermittently.
-  - Still open: the NLB front-end ingress rules in the public subnet.
+- **NLB reachability from the bastion: resolved, not FIPS.**
+  - The NLB worked from inside the VCN on both its private and public IPs, and the kube-proxy health-check endpoint returned 200.
+  - From the bastion, the public IP failed because nothing admitted the traffic:
+    - The public subnet's security list admits only the VCN CIDR (all protocols) and TCP 22 from anywhere.
+    - The CCM did not add a rule for the NLB. The cluster's `cloud-provider.yaml` sets `loadBalancer.securityListManagementMode: Frontend`, but the CCM ignores that for NLBs. NLBs take the per-service annotation `oci-network-load-balancer.oraclecloud.com/security-list-management-mode`, which defaults to `None`.
+  - Annotating the service with `Frontend` made the CCM add a TCP 80 ingress rule to the public subnet's security list, and the bastion got a response within 20 seconds.
+  - Deleting the service removed the rule and the NLB.
+  - The intermittent NLB failures in the non-FIPS L regression most likely have the same cause.
+  - The private IP is still unreachable from the bastion. That is environment routing: the public subnet has no route back to the bastion VCN.
+  - Worth adding to the fork's LB docs: a public NLB needs `security-list-management-mode: Frontend` (or `All`), or a manual rule.
 
 ## Finding: the bypass annotation is not recorded on the cluster
 
